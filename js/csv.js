@@ -7,6 +7,14 @@ const urlSearchParams = new URLSearchParams(location.search)
 const PLATFORM = urlSearchParams?.get('platform')?.trim('/'); // wordpress, shopify, shopbase
 const ENDPOINT = urlSearchParams?.get('url')?.trim('/');
 
+async function productCatalog() {
+    await fetch("\\_metadata\\product_catalog.json", { mode: "no-cors" }) // disable CORS because path does not contain http(s)
+    .then((res) => res.json())
+    .then((data) => {
+        return data;
+    });
+};
+productCatalog();
 window.addEventListener('DOMContentLoaded', (event) => {
     const urlSearchParams = new URLSearchParams(location.search)
 

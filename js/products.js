@@ -99,6 +99,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         } else if (PLATFORM == platform_fix.wordpress) {
                         }
 
+                        if (page > 60) next = false; // fix 15k sp
 
                     } catch (e) {
                     }

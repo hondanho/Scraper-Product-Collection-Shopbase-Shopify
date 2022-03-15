@@ -31,16 +31,37 @@ const Service = {
 
     GetPriceVariant(productCatalog, price, option1Value, option2Value, option3Value, productTypeFix) {
         var variant = productCatalog.find(x => productTypeFix && x.ProductType.toLowerCase() == productTypeFix.toLowerCase() ||
-                                        x.ProductType.toLowerCase() == option1Value.toLowerCase() ||
-                                        x.ProductType.toLowerCase() == option2Value.toLowerCase() ||
-                                        x.ProductType.toLowerCase() == option3Value.toLowerCase()
-                                    )
-        return variant ? { Price1: variant.Price1, Price2: variant.Price2 } : { Price1: price, Price2: price/0.72 };
+            x.ProductType.toLowerCase() == option1Value?.toLowerCase() ||
+            x.ProductType.toLowerCase() == option2Value?.toLowerCase() ||
+            x.ProductType.toLowerCase() == option3Value?.toLowerCase()
+        )
+        return variant ? { Price1: variant.Price1, Price2: variant.Price2 } : { Price1: price, Price2: price / 0.72 };
+    },
+
+    padTo2Digits(num) {
+        return num.toString().padStart(2, '0');
+    },
+
+    formatDate(date) {
+        return [
+            Service.padTo2Digits(date.getDate()),
+            Service.padTo2Digits(date.getMonth() + 1),
+            Service.padTo2Digits(date.getMilliseconds()),
+        ].join('');
     },
 
     async productToCsvObject(product, values, productCatalog, productTypeFix) {
         let index = 0;
         const images = {};
+
+        // set title
+        var titleSplit = product.title?.split(" ");
+        if (/\d/.test(titleSplit[titleSplit.length - 1])) {
+            titleSplit.pop();
+        }
+        var codeProduct = "TVC" + Service.formatDate(new Date());
+        var productHandle = product.handle + "-" + codeProduct;
+        var title = titleSplit.join(" ") + codeProduct;
 
         for (const variant of product.variants) {
             let imageSrc = '';
@@ -70,18 +91,18 @@ const Service = {
             var option1Value = Service.GetOptionValue(product.option_sets, variant.option1, false);
             var option2Value = Service.GetOptionValue(product.option_sets, variant.option2, false);
             var option3Value = Service.GetOptionValue(product.option_sets, variant.option3, false);
-            var priceVariant = Service.GetPriceVariant(productCatalog, variant.price, option1Value, option2Value, option3Value, productTypeFix);
             var description = productCatalog.find(x => productTypeFix && x.ProductType.toLowerCase() == productTypeFix.toLowerCase() ||
-                                                x.ProductType.toLowerCase() == option1Value.toLowerCase() ||
-                                                x.ProductType.toLowerCase() == option2Value.toLowerCase() ||
-                                                x.ProductType.toLowerCase() == option3Value.toLowerCase()
-                                            )?.DescriptionPage;
+                x.ProductType.toLowerCase() == option1Value.toLowerCase() ||
+                x.ProductType.toLowerCase() == option2Value.toLowerCase() ||
+                x.ProductType.toLowerCase() == option3Value.toLowerCase()
+            )?.DescriptionPage;
 
             if (PLATFORM == platform_fix.shopbase) {
+                var priceVariant = Service.GetPriceVariant(productCatalog, variant.price, option1Value, option2Value, option3Value, productTypeFix);
                 values.push({
-                    "Handle": product.handle ?? "", // "Handle",
-                    "Title": product.title, // "Title",
-                    "Body (HTML)": description, // "Body (HTML)",
+                    "Handle": productHandle, // "Handle",
+                    "Title": title, // "Title"
+                    "Body (HTML)": description ? description : product.body_html, // "Body (HTML)",
                     "Vendor": (index === 0 ? product.vendor ?? "" : ""), // "Vendor",
                     "Type": (index === 0 ? product.product_type ?? "" : ""), // "Type",
                     "Tags": (index === 0 ? product.tags?.join(',') : ""), // "Tags",
@@ -129,10 +150,11 @@ const Service = {
                     // "Collection": index === 0 ? product.collection : ""
                 });
             } else if (PLATFORM == platform_fix.shopify) {
+                var priceVariant = Service.GetPriceVariant(productCatalog, variant.price, variant.option1, variant.option2, variant.option3, productTypeFix);
                 values.push({
-                    "Handle": product.handle ?? "", // "Handle",
-                    "Title": product.title, // "Title",
-                    "Body (HTML)": description, // "Body (HTML)",
+                    "Handle": productHandle, // "Handle",
+                    "Title": title, // "Title"
+                    "Body (HTML)": description ? description : product.body_html, // "Body (HTML)",
                     "Vendor": (index === 0 ? product.vendor ?? "" : ""), // "Vendor",
                     "Type": (index === 0 ? product.product_type ?? "" : ""), // "Type",
                     "Tags": (index === 0 ? product.tags?.join(',') : ""), // "Tags",
@@ -191,9 +213,9 @@ const Service = {
                     }
 
                     values.push({
-                        "Handle": product.handle ?? "", // "Handle",
-                        "Title": "", // "Title",
-                        "Body (HTML)": "", // "Body (HTML)",
+                        "Handle": productHandle, // "Handle",
+                        "Title": title, // "Title"
+                        "Body (HTML)": description ? description : product.body_html, // "Body (HTML)",
                         "Vendor": "", // "Vendor",
                         "Type": "", // "Type",
                         "Tags": "", // "Tags",
@@ -206,7 +228,7 @@ const Service = {
                         "Option3 Value": "", // "Option3 Value",
                         "Variant SKU": "", // "Variant SKU",
                         "Variant Grams": "", //"Variant Grams",
-                        "Variant Inventory Tracker": "", // "Variant Inventory Tracker",
+                        "Variant Inventory Tracker": Service.getRandomArbitrary(386, 886), // "Variant Inventory Tracker",
                         "Variant Inventory Policy": "",
                         "Variant Fulfillment Service": "",  //"dsers-fulfillment-service",
                         "Variant Price": "", // "Variant Price",
